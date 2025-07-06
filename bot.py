@@ -107,17 +107,24 @@ async def download_media(url: str, user_id: int) -> Optional[str]:
         update_count += 1
         try:
             if d['status'] == 'finished':
-                text = f"⬇️ <b>Download Complete</b>\n\n<b>Downloaded:</b> <code>{format_size(d.get('total_bytes', 0))}</code>"
+                text = (
+                    f"⬇️ <b>Download Complete</b>\n"
+                    f"<b>Downloaded:</b> <code>{format_size(d.get('total_bytes', 0))}</code>"
+                )
             else:
                 downloaded = format_size(d.get('downloaded_bytes', 0))
                 total = format_size(d.get('total_bytes', 0))
                 anim = animation_states[update_count % len(animation_states)]
-                text = f"⬇️ <b>Downloading{anim}</b>\n\n<b>Downloaded:</b> <code>{downloaded} / {total}</code>\n⏱️ Please wait, time depends on file size."
+                text = (
+                    f"⬇️ <b>Downloading{anim}</b>\n"
+                    f"<b>Downloaded:</b> <code>{downloaded} / {total}</code>\n"
+                    f"⏱️ Please wait, time depends on file size."
+                )
             asyncio.create_task(update_progress_message(user_id, text))
         except Exception as e:
             logger.warning(f"Progress hook failed: {e}")
 
-    # ✅ Basic yt-dlp options
+    # 🔧 yt-dlp Options
     opts = {
         'format': 'bestvideo+bestaudio/best',
         'outtmpl': tmp_path,
@@ -132,9 +139,11 @@ async def download_media(url: str, user_id: int) -> Optional[str]:
         }],
     }
 
-    # ✅ Add Instagram cookies only if it's an IG URL
+    # ✅ Cookie handling based on platform
     if "instagram.com" in url or "instagr.am" in url:
         opts['cookiefile'] = 'instagram_cookies.txt'
+    elif "youtube.com" in url or "youtu.be" in url:
+        opts['cookiefile'] = 'youtube_cookies.txt'
 
     try:
         with yt_dlp.YoutubeDL(opts) as ydl:
