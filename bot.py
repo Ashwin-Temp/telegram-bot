@@ -107,30 +107,34 @@ async def download_media(url: str, user_id: int) -> Optional[str]:
         update_count += 1
         try:
             if d['status'] == 'finished':
-                text = f"⬇️ <b>Download Complete</b>\n<b>Downloaded:</b> <code>{format_size(d.get('total_bytes', 0))}</code>"
+                text = f"⬇️ <b>Download Complete</b>\n\n<b>Downloaded:</b> <code>{format_size(d.get('total_bytes', 0))}</code>"
             else:
                 downloaded = format_size(d.get('downloaded_bytes', 0))
                 total = format_size(d.get('total_bytes', 0))
                 anim = animation_states[update_count % len(animation_states)]
-                text = f"⬇️ <b>Downloading{anim}</b>\n<b>Downloaded:</b> <code>{downloaded} / {total}</code>"
+                text = f"⬇️ <b>Downloading{anim}</b>\n\n<b>Downloaded:</b> <code>{downloaded} / {total}</code>\n⏱️ Please wait, time depends on file size."
             asyncio.create_task(update_progress_message(user_id, text))
         except Exception as e:
             logger.warning(f"Progress hook failed: {e}")
 
-   opts = {
-    'format': 'bestvideo+bestaudio/best',
-    'outtmpl': tmp_path,
-    'progress_hooks': [hook],
-    'quiet': True,
-    'no_warnings': True,
-    'merge_output_format': 'mp4',
-    'noplaylist': True,
-    'cookiefile': 'instagram_cookies.txt',  # 👈 Add this line
-    'postprocessors': [{
-        'key': 'FFmpegVideoConvertor',
-        'preferedformat': 'mp4'
-    }],
-}
+    # ✅ Basic yt-dlp options
+    opts = {
+        'format': 'bestvideo+bestaudio/best',
+        'outtmpl': tmp_path,
+        'progress_hooks': [hook],
+        'quiet': True,
+        'no_warnings': True,
+        'merge_output_format': 'mp4',
+        'noplaylist': True,
+        'postprocessors': [{
+            'key': 'FFmpegVideoConvertor',
+            'preferedformat': 'mp4'
+        }],
+    }
+
+    # ✅ Add Instagram cookies only if it's an IG URL
+    if "instagram.com" in url or "instagr.am" in url:
+        opts['cookiefile'] = 'instagram_cookies.txt'
 
     try:
         with yt_dlp.YoutubeDL(opts) as ydl:
@@ -138,7 +142,7 @@ async def download_media(url: str, user_id: int) -> Optional[str]:
             return tmp_path
     except Exception as e:
         logger.error(f"Download error: {e}")
-        await update_progress_message(user_id, f"❌ Download failed: {e}")
+        await update_progress_message(user_id, f"❌ Download failed: {str(e)}")
         return None
 
 async def upload_media(client: Client, path: str, chat_id: int, user_id: int) -> bool:
