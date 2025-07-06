@@ -117,19 +117,20 @@ async def download_media(url: str, user_id: int) -> Optional[str]:
         except Exception as e:
             logger.warning(f"Progress hook failed: {e}")
 
-    opts = {
-        'format': 'bestvideo+bestaudio/best',
-        'outtmpl': tmp_path,
-        'progress_hooks': [hook],
-        'quiet': True,
-        'no_warnings': True,
-        'merge_output_format': 'mp4',
-        'noplaylist': True,
-        'postprocessors': [{
-            'key': 'FFmpegVideoConvertor',
-            'preferedformat': 'mp4'
-        }],
-    }
+   opts = {
+    'format': 'bestvideo+bestaudio/best',
+    'outtmpl': tmp_path,
+    'progress_hooks': [hook],
+    'quiet': True,
+    'no_warnings': True,
+    'merge_output_format': 'mp4',
+    'noplaylist': True,
+    'cookiefile': 'instagram_cookies.txt',  # 👈 Add this line
+    'postprocessors': [{
+        'key': 'FFmpegVideoConvertor',
+        'preferedformat': 'mp4'
+    }],
+}
 
     try:
         with yt_dlp.YoutubeDL(opts) as ydl:
