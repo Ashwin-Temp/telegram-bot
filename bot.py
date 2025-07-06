@@ -219,7 +219,10 @@ async def handle_video(client: Client, msg: Message):
         active_tasks.pop(user_id, None)
         return
 
-    # Delete all status messages
+# ✅ Only apply cooldown if upload succeeded
+    user_cooldowns[user_id] = datetime.now() + timedelta(seconds=COOLDOWN_SECONDS)
+
+# Delete all status messages
     try:
         await status_msg.delete()
     except:
